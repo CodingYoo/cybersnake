@@ -1,0 +1,25 @@
+{
+  "name": "cybersnake",
+  "version": "1.0.0",
+  "description": "赛博朋克风贪吃蛇游戏",
+  "main": "main.js",
+  "scripts": {
+    "dev": "vite --port 3000",
+    "build": "vite build",
+    "preview": "vite preview --port 3000",
+    "serve": "npm run dev",
+    "deploy": "npm run build && gh-pages -d dist",
+    "predeploy": "npm run build"
+  },
+  "dependencies": {
+    "vue": "^3.3.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^4.0.0",
+    "gh-pages": "^6.1.0",
+    "sass": "^1.90.0",
+    "terser": "^5.43.1",
+    "vite": "^4.0.0"
+  },
+  "type": "module"
+}
