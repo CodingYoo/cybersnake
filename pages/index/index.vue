@@ -48,12 +48,12 @@
           开始游戏
         </button>
 
-        <button class="menu-btn cyber-button" @click="showLeaderboard">
+        <!-- <button class="menu-btn cyber-button" @click="showLeaderboard">
           排行榜
-        </button>
+        </button> -->
 
         <button class="menu-btn cyber-button" @click="shareGame">
-          分享分数
+          分享游戏
         </button>
       </view>
     </view>
