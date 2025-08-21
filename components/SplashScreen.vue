@@ -31,7 +31,6 @@
         <view class="progress-bg"></view>
         <view class="progress-fill cyber-glow" :style="{ width: progress * 100 + '%' }"></view>
       </view>
-      <text class="progress-text cyber-text">{{ Math.floor(progress * 100) }}%</text>
     </view>
 
     <!-- 故障效果 -->
@@ -259,11 +258,6 @@ export default {
   background: linear-gradient(90deg, #0affff, #ff00ff);
   border-radius: 4rpx;
   transition: width 0.1s ease;
-}
-
-.progress-text {
-  font-size: 28rpx;
-  letter-spacing: 1rpx;
 }
 
 .glitch-effect {

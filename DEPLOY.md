@@ -24,7 +24,7 @@
 4. **推送代码触发部署**
    - 推送任何代码到 main 分支
    - GitHub Actions 会自动构建和部署
-   - 部署完成后访问：`https://your-username.github.io/cybersnake/`
+   - 部署完成后访问：`https://CodingYoo.github.io/cybersnake/`
 
 ### 方法二：手动部署
 

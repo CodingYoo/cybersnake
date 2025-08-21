@@ -1,5 +1,18 @@
 <template>
   <div class="game-container">
+    <!-- 背景效果 -->
+    <div class="game-background">
+      <!-- 正方形网格 -->
+      <div class="square-grid-container">
+        <div class="square-grid-layer" v-for="layer in gridLayers" :key="layer.id" :style="layer.style"></div>
+      </div>
+
+      <!-- 波浪状光影效果 -->
+      <div class="wave-lights-container">
+        <div class="wave-light" v-for="wave in waveLights" :key="wave.id" :style="wave.style"></div>
+      </div>
+    </div>
+
     <!-- 游戏画布 -->
     <canvas id="gameCanvas" class="game-canvas" :width="canvasWidth" :height="canvasHeight" @touchstart="onTouchStart"
       @touchmove="onTouchMove" @touchend="onTouchEnd" @mousedown="onMouseDown" @mousemove="onMouseMove"
@@ -118,7 +131,12 @@ export default {
 
       // 视觉效果
       particles: [],
-      glitchEffect: false
+      glitchEffect: false,
+
+      // 背景效果
+      gridLayers: [],
+      waveLights: [],
+      backgroundAnimationFrame: null
     }
   },
   computed: {
@@ -136,6 +154,10 @@ export default {
     this.initGame()
     this.setupKeyboardControls()
 
+    // 初始化背景效果
+    this.initBackgroundEffects()
+    this.startBackgroundAnimation()
+
     // 添加全局调试方法
     window.setFoodAnimationSpeed = (speed) => this.setFoodAnimationSpeed(speed)
     window.setFoodEatDuration = (duration) => this.setFoodEatDuration(duration)
@@ -147,6 +169,11 @@ export default {
   beforeUnmount () {
     this.stopGame()
     this.removeKeyboardControls()
+
+    // 清理背景动画
+    if (this.backgroundAnimationFrame) {
+      cancelAnimationFrame(this.backgroundAnimationFrame)
+    }
 
     // 清理全局调试方法
     delete window.setFoodAnimationSpeed
@@ -758,6 +785,128 @@ export default {
     setFoodEatDuration (duration) {
       this.foodEatAnimation.duration = duration
       console.log('🍎 Food eat animation duration set to:', duration + 'ms')
+    },
+
+    // 初始化背景效果
+    initBackgroundEffects () {
+      // 初始化正方形网格层
+      this.gridLayers = []
+      const layerCount = 4
+
+      for (let i = 0; i < layerCount; i++) {
+        const layer = {
+          id: i,
+          size: 40 + i * 20, // 40px, 60px, 80px, 100px
+          opacity: 0.08 - i * 0.015, // 递减透明度
+          speed: 0.3 + i * 0.2, // 不同速度
+          offsetX: 0,
+          offsetY: 0,
+          style: {}
+        }
+        this.gridLayers.push(layer)
+      }
+
+      // 初始化波浪状光影
+      this.waveLights = []
+      const waveCount = 6
+
+      for (let i = 0; i < waveCount; i++) {
+        const wave = {
+          id: i,
+          direction: i % 2 === 0 ? 'horizontal' : 'vertical', // 交替方向
+          position: (i / waveCount) * 100, // 分布位置
+          width: 150 + Math.random() * 100, // 波浪宽度
+          speed: 0.5 + Math.random() * 1.0, // 随机速度
+          opacity: 0.1 + Math.random() * 0.15, // 随机透明度
+          phase: Math.random() * Math.PI * 2, // 随机相位
+          style: {}
+        }
+        this.waveLights.push(wave)
+      }
+    },
+
+    // 开始背景动画
+    startBackgroundAnimation () {
+      const animate = () => {
+        const time = Date.now() * 0.001
+
+        // 更新网格层动画
+        this.gridLayers.forEach((layer, index) => {
+          // 轻微的移动
+          layer.offsetX = Math.sin(time * layer.speed * 0.3) * 5
+          layer.offsetY = Math.cos(time * layer.speed * 0.2) * 3
+
+          // 透明度波动
+          const opacityVariation = Math.sin(time * layer.speed + index) * 0.02
+          const currentOpacity = Math.max(0, layer.opacity + opacityVariation)
+
+          layer.style = {
+            position: 'absolute',
+            top: '0',
+            left: '0',
+            width: '100%',
+            height: '100%',
+            backgroundImage: `
+              linear-gradient(rgba(10, 255, 255, ${currentOpacity}) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(10, 255, 255, ${currentOpacity}) 1px, transparent 1px)
+            `,
+            backgroundSize: `${layer.size}px ${layer.size}px`,
+            transform: `translate(${layer.offsetX}px, ${layer.offsetY}px)`,
+            pointerEvents: 'none'
+          }
+        })
+
+        // 更新波浪光影动画
+        this.waveLights.forEach((wave, index) => {
+          const waveTime = time * wave.speed + wave.phase
+          const intensity = (Math.sin(waveTime) + 1) * 0.5 // 0-1
+          const currentOpacity = wave.opacity * intensity
+
+          if (wave.direction === 'horizontal') {
+            // 水平波浪
+            const yPos = wave.position + Math.sin(waveTime * 0.5) * 20
+            wave.style = {
+              position: 'absolute',
+              left: '0',
+              top: `${yPos}%`,
+              width: '100%',
+              height: `${wave.width}px`,
+              background: `linear-gradient(90deg,
+                transparent 0%,
+                rgba(10, 255, 255, ${currentOpacity * 0.3}) 25%,
+                rgba(10, 255, 255, ${currentOpacity}) 50%,
+                rgba(10, 255, 255, ${currentOpacity * 0.3}) 75%,
+                transparent 100%)`,
+              transform: `translateX(${Math.sin(waveTime * 0.8) * 50}px)`,
+              pointerEvents: 'none',
+              filter: 'blur(2px)'
+            }
+          } else {
+            // 垂直波浪
+            const xPos = wave.position + Math.cos(waveTime * 0.4) * 15
+            wave.style = {
+              position: 'absolute',
+              left: `${xPos}%`,
+              top: '0',
+              width: `${wave.width}px`,
+              height: '100%',
+              background: `linear-gradient(180deg,
+                transparent 0%,
+                rgba(10, 255, 255, ${currentOpacity * 0.3}) 25%,
+                rgba(10, 255, 255, ${currentOpacity}) 50%,
+                rgba(10, 255, 255, ${currentOpacity * 0.3}) 75%,
+                transparent 100%)`,
+              transform: `translateY(${Math.cos(waveTime * 0.6) * 30}px)`,
+              pointerEvents: 'none',
+              filter: 'blur(2px)'
+            }
+          }
+        })
+
+        this.backgroundAnimationFrame = requestAnimationFrame(animate)
+      }
+
+      animate()
     }
   }
 }
@@ -768,12 +917,54 @@ export default {
   position: relative;
   width: 100vw;
   height: 100vh;
-  background: #001122;
+  background: linear-gradient(135deg, #001122 0%, #001a33 50%, #002244 100%);
   overflow: hidden;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
+}
+
+.game-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.square-grid-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.square-grid-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.wave-lights-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.wave-light {
+  position: absolute;
+  pointer-events: none;
 }
 
 .game-canvas {
@@ -782,12 +973,14 @@ export default {
   height: min(90vw, 90vh);
   max-width: 600px;
   max-height: 600px;
-  background: #001122;
+  background: rgba(0, 17, 34, 0.9);
   border: 2px solid #0affff;
   border-radius: 8px;
   box-shadow:
     0 0 20px rgba(10, 255, 255, 0.3),
     inset 0 0 20px rgba(10, 255, 255, 0.1);
+  position: relative;
+  z-index: 10;
 }
 
 .game-ui {
@@ -800,6 +993,7 @@ export default {
   align-items: flex-start;
   z-index: 100;
   pointer-events: none;
+  z-index: 20;
 }
 
 .game-ui>* {
